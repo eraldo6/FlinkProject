@@ -7,7 +7,7 @@ public class TPCDSBenchmark {
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
         TableEnvironment tableEnv = TableEnvironment.create(settings);
 
-        String dataPath = "~/FlinkTPCDS/tpcds-kit/dataset";
+        String dataPath = "~/tpcds-kit/dataset";
 
         registerStoreReturns(tableEnv, dataPath);
         registerDateDim(tableEnv, dataPath);
