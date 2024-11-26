@@ -12,7 +12,7 @@ public class TPCDSBenchmark {
         TableEnvironment tableEnv = TableEnvironment.create(settings);
         try {
             // Read SQL from file
-            String sqlCreateTables = new String(Files.readAllBytes(Paths.get("alltables.sql")));
+            String sqlCreateTables = new String(Files.readAllBytes(Paths.get("/home/egrabovaj/FlinkProject/src/main/resources/alltables.sql")));
             // Execute SQL
             tableEnv.executeSql(sqlCreateTables);
         } catch (IOException e) {
