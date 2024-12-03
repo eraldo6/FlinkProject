@@ -865,6 +865,139 @@ public class TPCDSBenchmark {
         TableResult result2 = tableEnv.executeSql(query2);
         result2.print();
 
+        String query3 = "select  dt.d_year \n" +
+                "       ,item.i_brand_id brand_id \n" +
+                "       ,item.i_brand brand\n" +
+                "       ,sum(ss_ext_sales_price) sum_agg\n" +
+                " from  date_dim dt \n" +
+                "      ,store_sales\n" +
+                "      ,item\n" +
+                " where dt.d_date_sk = store_sales.ss_sold_date_sk\n" +
+                "   and store_sales.ss_item_sk = item.i_item_sk\n" +
+                "   and item.i_manufact_id = 436\n" +
+                "   and dt.d_moy=12\n" +
+                " group by dt.d_year\n" +
+                "      ,item.i_brand\n" +
+                "      ,item.i_brand_id\n" +
+                " order by dt.d_year\n" +
+                "         ,sum_agg desc\n" +
+                "         ,brand_id\n" +
+                " limit 100";
+
+        TableResult result3 = tableEnv.executeSql(query3);
+        result3.print();
+
+        String query4 = "with year_total as (\n" +
+                " select c_customer_id customer_id\n" +
+                "       ,c_first_name customer_first_name\n" +
+                "       ,c_last_name customer_last_name\n" +
+                "       ,c_preferred_cust_flag customer_preferred_cust_flag\n" +
+                "       ,c_birth_country customer_birth_country\n" +
+                "       ,c_login customer_login\n" +
+                "       ,c_email_address customer_email_address\n" +
+                "       ,d_year dyear\n" +
+                "       ,sum(((ss_ext_list_price-ss_ext_wholesale_cost-ss_ext_discount_amt)+ss_ext_sales_price)/2) year_total\n" +
+                "       ,'s' sale_type\n" +
+                " from customer\n" +
+                "     ,store_sales\n" +
+                "     ,date_dim\n" +
+                " where c_customer_sk = ss_customer_sk\n" +
+                "   and ss_sold_date_sk = d_date_sk\n" +
+                " group by c_customer_id\n" +
+                "         ,c_first_name\n" +
+                "         ,c_last_name\n" +
+                "         ,c_preferred_cust_flag\n" +
+                "         ,c_birth_country\n" +
+                "         ,c_login\n" +
+                "         ,c_email_address\n" +
+                "         ,d_year\n" +
+                " union all\n" +
+                " select c_customer_id customer_id\n" +
+                "       ,c_first_name customer_first_name\n" +
+                "       ,c_last_name customer_last_name\n" +
+                "       ,c_preferred_cust_flag customer_preferred_cust_flag\n" +
+                "       ,c_birth_country customer_birth_country\n" +
+                "       ,c_login customer_login\n" +
+                "       ,c_email_address customer_email_address\n" +
+                "       ,d_year dyear\n" +
+                "       ,sum((((cs_ext_list_price-cs_ext_wholesale_cost-cs_ext_discount_amt)+cs_ext_sales_price)/2) ) year_total\n" +
+                "       ,'c' sale_type\n" +
+                " from customer\n" +
+                "     ,catalog_sales\n" +
+                "     ,date_dim\n" +
+                " where c_customer_sk = cs_bill_customer_sk\n" +
+                "   and cs_sold_date_sk = d_date_sk\n" +
+                " group by c_customer_id\n" +
+                "         ,c_first_name\n" +
+                "         ,c_last_name\n" +
+                "         ,c_preferred_cust_flag\n" +
+                "         ,c_birth_country\n" +
+                "         ,c_login\n" +
+                "         ,c_email_address\n" +
+                "         ,d_year\n" +
+                "union all\n" +
+                " select c_customer_id customer_id\n" +
+                "       ,c_first_name customer_first_name\n" +
+                "       ,c_last_name customer_last_name\n" +
+                "       ,c_preferred_cust_flag customer_preferred_cust_flag\n" +
+                "       ,c_birth_country customer_birth_country\n" +
+                "       ,c_login customer_login\n" +
+                "       ,c_email_address customer_email_address\n" +
+                "       ,d_year dyear\n" +
+                "       ,sum((((ws_ext_list_price-ws_ext_wholesale_cost-ws_ext_discount_amt)+ws_ext_sales_price)/2) ) year_total\n" +
+                "       ,'w' sale_type\n" +
+                " from customer\n" +
+                "     ,web_sales\n" +
+                "     ,date_dim\n" +
+                " where c_customer_sk = ws_bill_customer_sk\n" +
+                "   and ws_sold_date_sk = d_date_sk\n" +
+                " group by c_customer_id\n" +
+                "         ,c_first_name\n" +
+                "         ,c_last_name\n" +
+                "         ,c_preferred_cust_flag\n" +
+                "         ,c_birth_country\n" +
+                "         ,c_login\n" +
+                "         ,c_email_address\n" +
+                "         ,d_year\n" +
+                "         )\n" +
+                "  select  t_s_secyear.customer_preferred_cust_flag\n" +
+                " from year_total t_s_firstyear\n" +
+                "     ,year_total t_s_secyear\n" +
+                "     ,year_total t_c_firstyear\n" +
+                "     ,year_total t_c_secyear\n" +
+                "     ,year_total t_w_firstyear\n" +
+                "     ,year_total t_w_secyear\n" +
+                " where t_s_secyear.customer_id = t_s_firstyear.customer_id\n" +
+                "   and t_s_firstyear.customer_id = t_c_secyear.customer_id\n" +
+                "   and t_s_firstyear.customer_id = t_c_firstyear.customer_id\n" +
+                "   and t_s_firstyear.customer_id = t_w_firstyear.customer_id\n" +
+                "   and t_s_firstyear.customer_id = t_w_secyear.customer_id\n" +
+                "   and t_s_firstyear.sale_type = 's'\n" +
+                "   and t_c_firstyear.sale_type = 'c'\n" +
+                "   and t_w_firstyear.sale_type = 'w'\n" +
+                "   and t_s_secyear.sale_type = 's'\n" +
+                "   and t_c_secyear.sale_type = 'c'\n" +
+                "   and t_w_secyear.sale_type = 'w'\n" +
+                "   and t_s_firstyear.dyear =  2001\n" +
+                "   and t_s_secyear.dyear = 2001+1\n" +
+                "   and t_c_firstyear.dyear =  2001\n" +
+                "   and t_c_secyear.dyear =  2001+1\n" +
+                "   and t_w_firstyear.dyear = 2001\n" +
+                "   and t_w_secyear.dyear = 2001+1\n" +
+                "   and t_s_firstyear.year_total > 0\n" +
+                "   and t_c_firstyear.year_total > 0\n" +
+                "   and t_w_firstyear.year_total > 0\n" +
+                "   and case when t_c_firstyear.year_total > 0 then t_c_secyear.year_total / t_c_firstyear.year_total else null end\n" +
+                "           > case when t_s_firstyear.year_total > 0 then t_s_secyear.year_total / t_s_firstyear.year_total else null end\n" +
+                "   and case when t_c_firstyear.year_total > 0 then t_c_secyear.year_total / t_c_firstyear.year_total else null end\n" +
+                "           > case when t_w_firstyear.year_total > 0 then t_w_secyear.year_total / t_w_firstyear.year_total else null end\n" +
+                " order by t_s_secyear.customer_preferred_cust_flag\n" +
+                "limit 100";
+
+        TableResult result4 = tableEnv.executeSql(query4);
+        result4.print();
+
+
         String query7 = "select  i_item_id, \n" +
                 "        avg(ss_quantity) agg1,\n" +
                 "        avg(ss_list_price) agg2,\n" +
