@@ -782,7 +782,7 @@ public class TPCDSBenchmark {
     }
 
     private static void executeQuery(TableEnvironment tableEnv) {
-        String query = "WITH customer_total_return AS (" +
+        String query1 = "WITH customer_total_return AS (" +
                 "SELECT sr_customer_sk AS ctr_customer_sk, " +
                 "       sr_store_sk AS ctr_store_sk, " +
                 "       SUM(sr_return_amt) AS ctr_total_return " +
@@ -801,7 +801,91 @@ public class TPCDSBenchmark {
                 "ORDER BY c_customer_id " +
                 "LIMIT 100";
 
-        TableResult result = tableEnv.executeSql(query);
-        result.print();
+        TableResult result1 = tableEnv.executeSql(query1);
+        result1.print();
+
+        String query2 = "with wscs as\n" +
+                " (select sold_date_sk\n" +
+                "        ,sales_price\n" +
+                "  from (select ws_sold_date_sk sold_date_sk\n" +
+                "              ,ws_ext_sales_price sales_price\n" +
+                "        from web_sales) x\n" +
+                "        union all\n" +
+                "       (select cs_sold_date_sk sold_date_sk\n" +
+                "              ,cs_ext_sales_price sales_price\n" +
+                "        from catalog_sales)),\n" +
+                " wswscs as \n" +
+                " (select d_week_seq,\n" +
+                "        sum(case when (d_day_name='Sunday') then sales_price else null end) sun_sales,\n" +
+                "        sum(case when (d_day_name='Monday') then sales_price else null end) mon_sales,\n" +
+                "        sum(case when (d_day_name='Tuesday') then sales_price else  null end) tue_sales,\n" +
+                "        sum(case when (d_day_name='Wednesday') then sales_price else null end) wed_sales,\n" +
+                "        sum(case when (d_day_name='Thursday') then sales_price else null end) thu_sales,\n" +
+                "        sum(case when (d_day_name='Friday') then sales_price else null end) fri_sales,\n" +
+                "        sum(case when (d_day_name='Saturday') then sales_price else null end) sat_sales\n" +
+                " from wscs\n" +
+                "     ,date_dim\n" +
+                " where d_date_sk = sold_date_sk\n" +
+                " group by d_week_seq)\n" +
+                " select d_week_seq1\n" +
+                "       ,round(sun_sales1/sun_sales2,2)\n" +
+                "       ,round(mon_sales1/mon_sales2,2)\n" +
+                "       ,round(tue_sales1/tue_sales2,2)\n" +
+                "       ,round(wed_sales1/wed_sales2,2)\n" +
+                "       ,round(thu_sales1/thu_sales2,2)\n" +
+                "       ,round(fri_sales1/fri_sales2,2)\n" +
+                "       ,round(sat_sales1/sat_sales2,2)\n" +
+                " from\n" +
+                " (select wswscs.d_week_seq d_week_seq1\n" +
+                "        ,sun_sales sun_sales1\n" +
+                "        ,mon_sales mon_sales1\n" +
+                "        ,tue_sales tue_sales1\n" +
+                "        ,wed_sales wed_sales1\n" +
+                "        ,thu_sales thu_sales1\n" +
+                "        ,fri_sales fri_sales1\n" +
+                "        ,sat_sales sat_sales1\n" +
+                "  from wswscs,date_dim \n" +
+                "  where date_dim.d_week_seq = wswscs.d_week_seq and\n" +
+                "        d_year = 2001) y,\n" +
+                " (select wswscs.d_week_seq d_week_seq2\n" +
+                "        ,sun_sales sun_sales2\n" +
+                "        ,mon_sales mon_sales2\n" +
+                "        ,tue_sales tue_sales2\n" +
+                "        ,wed_sales wed_sales2\n" +
+                "        ,thu_sales thu_sales2\n" +
+                "        ,fri_sales fri_sales2\n" +
+                "        ,sat_sales sat_sales2\n" +
+                "  from wswscs\n" +
+                "      ,date_dim \n" +
+                "  where date_dim.d_week_seq = wswscs.d_week_seq and\n" +
+                "        d_year = 2001+1) z\n" +
+                " where d_week_seq1=d_week_seq2-53\n" +
+                " order by d_week_seq1";
+
+        TableResult result2 = tableEnv.executeSql(query2);
+        result2.print();
+
+        String query7 = "select  i_item_id, \n" +
+                "        avg(ss_quantity) agg1,\n" +
+                "        avg(ss_list_price) agg2,\n" +
+                "        avg(ss_coupon_amt) agg3,\n" +
+                "        avg(ss_sales_price) agg4 \n" +
+                " from store_sales, customer_demographics, date_dim, item, promotion\n" +
+                " where ss_sold_date_sk = d_date_sk and\n" +
+                "       ss_item_sk = i_item_sk and\n" +
+                "       ss_cdemo_sk = cd_demo_sk and\n" +
+                "       ss_promo_sk = p_promo_sk and\n" +
+                "       cd_gender = 'F' and \n" +
+                "       cd_marital_status = 'W' and\n" +
+                "       cd_education_status = 'Primary' and\n" +
+                "       (p_channel_email = 'N' or p_channel_event = 'N') and\n" +
+                "       d_year = 1998 \n" +
+                " group by i_item_id\n" +
+                " order by i_item_id\n" +
+                " limit 100";
+        TableResult result7 = tableEnv.executeSql(query7);
+        result7.print();
+
+
     }
 }
