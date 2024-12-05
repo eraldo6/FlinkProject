@@ -7,7 +7,7 @@ WRITE_GROUPBy=  False
 def main():
 
     # DIR_NAME= "/home/ffaghih/op_flink_analysis/metrics_SSB/filter/"
-    DIR_NAME= "/home/ffaghih/op_flink_analysis/metrics_SSB/aggr_change/"
+    DIR_NAME= "/home/egrabovaj/FlinkProject/job_results/"
     for filename in os.listdir(DIR_NAME):                   # for every file in the directory.
         if filename.endswith(".json"):
             print(f"\n'*******'\n'*******'\n'*******'\n'*******'\n'File_Name': {filename}")
