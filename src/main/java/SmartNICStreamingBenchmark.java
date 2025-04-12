@@ -1,130 +1,40 @@
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
-import flink.source.EnhancedTcpSource;
-import flink.metrics.FlinkMetricsCollector;
+import flink.source.NewSource;
 
-import java.io.File;
-import java.util.UUID;
-
-/**
- * Enhanced version of the SmartNIC streaming benchmark with comprehensive metrics
- */
-public class EnhancedSmartNICStreamingBenchmark {
+public class SmartNICStreamingBenchmark {
 
     public static void main(String[] args) throws Exception {
-        // Parse command line arguments
-        String metricsDir = "/path/to/metrics";
-        int tcpPort = 8000;
-        
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("--metrics-dir") && i + 1 < args.length) {
-                metricsDir = args[i + 1];
-                i++;
-            } else if (args[i].equals("--port") && i + 1 < args.length) {
-                tcpPort = Integer.parseInt(args[i + 1]);
-                i++;
-            }
-        }
-        
-        // Create metrics directory if it doesn't exist
-        File metricsDirFile = new File(metricsDir);
-        if (!metricsDirFile.exists()) {
-            metricsDirFile.mkdirs();
-        }
-        
-        // Create metrics file paths
-        String metricsFilePath = metricsDir + "/flink_metrics.csv";
-        
-        // Set up Flink execution environment
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
-        env.disableOperatorChaining();
-        
-        // Create a unique job ID for this run
-        final String jobId = UUID.randomUUID().toString();
 
-        // Set up table environment
+        // Switch to STREAMING mode
+        env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+
+        env.disableOperatorChaining();
+
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);          
 
-        // Set up enhanced TCP source with metrics
+        // Set up TCP source to listen for data
+        int port = 8000;
         DataStream<String> sourceStream = env.addSource(
-            new EnhancedTcpSource(tcpPort, metricsFilePath, true))
-            .name("Enhanced-TCP-Source")
-            .uid("source-" + UUID.randomUUID().toString());
+            new NewSource(port, "/path/to/metrics/flink_source_metrics.csv", true))
+            .name("TCP-Source");
 
-        // Add processing timestamps to track latency
-        DataStream<String> timestampedStream = sourceStream
-            .map(new RichMapFunction<String, String>() {
-                private transient FlinkMetricsCollector metricsCollector;
-                
-                @Override
-                public void open(Configuration parameters) throws Exception {
-                    super.open(parameters);
-                    String jobId = getRuntimeContext().getJobId().toString();
-                    metricsCollector = FlinkMetricsCollector.getInstance(metricsFilePath, jobId);
-                }
-                
-                @Override
-                public String map(String value) throws Exception {
-                    // Record that this record was processed
-                    long processTime = System.nanoTime();
-                    
-                    // Here we would normally do some actual processing
-                    
-                    // Record processing in metrics
-                    metricsCollector.recordProcessed("record-" + UUID.randomUUID().toString(), 
-                                                    processTime, System.nanoTime());
-                    
-                    return value;
-                }
-            })
-            .name("ProcessingTimestamper")
-            .uid("timestamper-" + UUID.randomUUID().toString());
-
-        // Register tables from the streaming data
-        registerTablesFromStream(tableEnv, timestampedStream);
+        // Register tables from streaming data
+        registerTablesFromStream(tableEnv, sourceStream);
         
         // Execute the query
-        Table resultTable = executeQuery(tableEnv);
-        
-        // Convert result back to DataStream
-        DataStream<Row> resultStream = tableEnv.toDataStream(resultTable);
-        
-        // Add a metrics-aware sink to track result emission
-        resultStream.addSink(new RichSinkFunction<Row>() {
-            private transient FlinkMetricsCollector metricsCollector;
-            
-            @Override
-            public void open(Configuration parameters) throws Exception {
-                super.open(parameters);
-                String jobId = getRuntimeContext().getJobId().toString();
-                metricsCollector = FlinkMetricsCollector.getInstance(metricsFilePath, jobId);
-            }
-            
-            @Override
-            public void invoke(Row value, Context context) throws Exception {
-                // Record result emission
-                metricsCollector.recordResultEmitted();
-                
-                // In a real application, would write results somewhere
-                System.out.println("Result: " + value);
-            }
-        })
-        .name("MetricsAwareSink")
-        .uid("sink-" + UUID.randomUUID().toString());
+        executeQuery(tableEnv);
         
         // Execute the job
-        env.execute("Enhanced-SmartNIC-Streaming-Benchmark-" + jobId);
+        env.execute("TPCDSBenchmark-Streaming");
     }
 
     private static void registerTablesFromStream(StreamTableEnvironment tableEnv, DataStream<String> sourceStream) {
@@ -202,7 +112,7 @@ public class EnhancedSmartNICStreamingBenchmark {
         tableEnv.createTemporaryView("item", itemTable);
     }
 
-    private static Table executeQuery(StreamTableEnvironment tableEnv) {
+    private static void executeQuery(StreamTableEnvironment tableEnv) {
         String query = "SELECT " +
                        "dt.d_year, " +
                        "item.i_brand_id AS brand_id, " +
@@ -217,6 +127,6 @@ public class EnhancedSmartNICStreamingBenchmark {
                        "WHERE item.i_manufact_id = 436 AND dt.d_moy = 12 AND store_sales.ss_quantity < 10 " +
                        "GROUP BY dt.d_year, item.i_brand, item.i_brand_id, store_sales.ss_quantity, item.i_manufact_id, dt.d_moy";
         
-        return tableEnv.sqlQuery(query);
+        tableEnv.executeSql(query).print();
     }
 }
