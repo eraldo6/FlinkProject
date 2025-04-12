@@ -3,7 +3,7 @@
 class Analyze_Constants():
     def __init__(self): 
         GRAPH_FILES_DIR= "graph_files/"
-        self.SRC_KEYWORDS= ["lineorder", "date", "supplier", "part", "customer"]
+        self.SRC_KEYWORDS= ["catalog_p", "catalog_r", "catalog_s", "customer_d", "date_dim", "item", "promotion", "store_r", "store_s", "store", "web_r", "web_s", "web_site"]
         self.COLOR_MAPPING = { 'SF_1': 'red', 'SF_5': 'blue', 'SF_10': 'green', 'SF_20': 'purple'} 
         self.SF_SSB= "SF_SSB"
         self.SRC_OUTPUT= GRAPH_FILES_DIR + "src_output.csv"

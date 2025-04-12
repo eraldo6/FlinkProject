@@ -2,7 +2,7 @@
 from draw_graphs import *
 DEBUG= False 
 WRITE_FILTER=   False
-WRITE_GROUPBy=  False 
+WRITE_GROUPBy=  False
 
 def main():
 
@@ -14,9 +14,9 @@ def main():
             input_json_path = os.path.join(DIR_NAME, filename) 
             df_metrics = parse_job_json(input_json_path) 
 
-    # draw_graphs(f.VERTEX_NAME, cons.SRC_KEYWORDS, cons.SRC_OUTPUT, cons.SRC_GRAPH) 
+    draw_graphs(f.VERTEX_NAME, cons.SRC_KEYWORDS, cons.SRC_OUTPUT, cons.SRC_GRAPH) 
     draw_graph_filter(x_col= "pred_cnt", y_col_1="rate_tuple_S", y_col_2= "rate_MB_S", input_file= cons.FILTER_OUT_FILE, graph_name= cons.FILTER_GRAPH)
-    draw_graph_groupByAggregate(y_col_1="rate_tuple_S", y_col_2= "rate_MB_S", input_file= cons.GROUP_AGGREGATE_OUT_FILE, graph_name= cons.GROUP_AGGREGATE_GRAPH)
+    # draw_graph_groupByAggregate(y_col_1="rate_tuple_S", y_col_2= "rate_MB_S", input_file= cons.GROUP_AGGREGATE_OUT_FILE, graph_name= cons.GROUP_AGGREGATE_GRAPH)
 
 
 def parse_job_json(json_path):
@@ -84,7 +84,7 @@ def get_job_metrics(json_path, vertices):
         print(f"SF_pattern_found: {matched_pattern}") 
 
     df[cons.SF_SSB]= matched_pattern
-    # write_to_csv(df, f.VERTEX_NAME, cons.SRC_KEYWORDS, cons.SRC_OUTPUT)
+    write_to_csv(df, f.VERTEX_NAME, cons.SRC_KEYWORDS, cons.SRC_OUTPUT)
     
     return df 
 

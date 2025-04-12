@@ -52,19 +52,21 @@ def draw_graphs(column_name, keywords, input_file, graph_name):
 
     print(f"\n'Draw_Graphs' column_name: {column_name}, keywords:{keywords}, input_file:{input_file}, graph_name:{graph_name}")
     df= pd.read_csv(input_file) 
-    df['color'] = df[cons.SF_SSB].map(cons.COLOR_MAPPING) 
+    # df['color'] = df[cons.SF_SSB].map(cons.COLOR_MAPPING) 
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 8)) 
+    fig, axes = plt.subplots(1, 2, figsize=(20, 8)) 
     for keyword in keywords:
         filtered_df = df[df[column_name].str.contains(keyword, case=False)]
-        print(f"keyword:{keyword}, len:{len(filtered_df['color'])}") 
-        axes[0].scatter([keyword] * len(filtered_df), filtered_df['rate_tuple_S'], c=filtered_df['color'], label=keyword, alpha=0.4, marker= '*')
-        axes[1].scatter([keyword] * len(filtered_df), filtered_df['rate_MB_S'], c=filtered_df['color'], label=keyword, alpha=0.4, marker= '*')
+        # print(f"keyword:{keyword}, len:{len(filtered_df['color'])}") 
+        # axes[0].scatter([keyword] * len(filtered_df), filtered_df['rate_tuple_S'], c=filtered_df['color'], label=keyword, alpha=0.4, marker= '*')
+        # axes[1].scatter([keyword] * len(filtered_df), filtered_df['rate_MB_S'], c=filtered_df['color'], label=keyword, alpha=0.4, marker= '*')
+        axes[0].scatter([keyword] * len(filtered_df), filtered_df['rate_tuple_S'], c='red', label=keyword, alpha=0.4, marker= '*')
+        axes[1].scatter([keyword] * len(filtered_df), filtered_df['rate_MB_S'], c='red', label=keyword, alpha=0.4, marker= '*')
 
-    axes[0].set_xlabel('Table Name', fontsize=14);      axes[0].set_ylabel('rate_tuple_S', fontsize=14)
-    axes[1].set_xlabel('Table Name', fontsize=14);      axes[1].set_ylabel('rate_MB_S', fontsize=14)
-    axes[0].tick_params(axis='both', which='major', labelsize=14)  
-    axes[1].tick_params(axis='both', which='major', labelsize=14)
+    axes[0].set_xlabel('Table Name', fontsize=9);      axes[0].set_ylabel('rate_tuple_S', fontsize=8)
+    axes[1].set_xlabel('Table Name', fontsize=9);      axes[1].set_ylabel('rate_MB_S', fontsize=8)
+    axes[0].tick_params(axis='both', which='major', labelsize=9)  
+    axes[1].tick_params(axis='both', which='major', labelsize=9)
     axes[0].set_yscale('log') 
     axes[1].set_yscale('log') 
 
